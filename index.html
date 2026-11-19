@@ -2,46 +2,48 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>3D ASCII Christmas Tree 2026</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
+    html, body {
       background: #050814;
       color: #e0e0e0;
       font-family: 'Courier New', monospace;
-      overflow-x: hidden;
-      min-height: 100vh;
+      overflow: hidden;
+      height: 100%;
+      width: 100%;
+    }
+    body {
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: flex-start;
     }
     header {
       text-align: center;
-      padding: 16px 12px 8px;
+      padding: 10px 8px 4px;
       width: 100%;
-      background: linear-gradient(180deg, #0a1020 0%, transparent 100%);
+      z-index: 10;
+      flex-shrink: 0;
     }
     h1 {
-      font-size: 1.4rem;
+      font-size: clamp(1.1rem, 4.5vw, 1.5rem);
       color: #ffd54a;
-      text-shadow: 0 0 12px #ffaa00, 0 0 24px #ff8800;
-      letter-spacing: 2px;
+      text-shadow: 0 0 14px #ffaa00, 0 0 28px #ff8800;
+      letter-spacing: 1px;
     }
     .sub {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: #a08050;
-      margin-top: 4px;
+      margin-top: 2px;
     }
     #canvas-wrap {
       position: relative;
-      width: min(100vw, 420px);
-      height: min(85vh, 780px);
-      margin: 8px auto;
-      border: 1px solid #1a2535;
-      border-radius: 8px;
+      width: 100%;
+      flex: 1;
+      max-width: 480px;
       overflow: hidden;
-      box-shadow: 0 0 40px rgba(255, 180, 50, 0.15);
     }
     canvas {
       display: block;
@@ -50,13 +52,16 @@
       background: #050814;
     }
     .controls {
-      width: min(100vw, 420px);
-      padding: 12px 16px 24px;
+      width: 100%;
+      max-width: 480px;
+      padding: 10px 12px 16px;
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
       justify-content: center;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
+      flex-shrink: 0;
+      background: linear-gradient(0deg, #050814 60%, transparent);
     }
     .controls label {
       display: flex;
@@ -67,34 +72,32 @@
       border-radius: 6px;
       border: 1px solid #1e2a3a;
     }
-    input[type="range"] { width: 90px; accent-color: #ffd54a; }
+    input[type="range"] { width: 80px; accent-color: #ffd54a; }
     button {
       background: linear-gradient(135deg, #3a2a10, #5a4018);
       color: #ffd54a;
       border: 1px solid #8a6a30;
-      padding: 8px 14px;
+      padding: 7px 12px;
       border-radius: 6px;
       cursor: pointer;
       font-family: inherit;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
-    button:hover { background: #6a5020; }
-    .info {
-      max-width: 420px;
-      padding: 0 16px 32px;
-      font-size: 0.78rem;
-      line-height: 1.5;
-      color: #8090a0;
-      text-align: center;
+    button:active { background: #6a5020; }
+    #fps {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 0.65rem;
+      color: #445;
+      z-index: 5;
     }
-    .info a { color: #ffd54a; }
-    #fps { position: absolute; top: 6px; right: 8px; font-size: 0.7rem; color: #556; }
   </style>
 </head>
 <body>
   <header>
     <h1>✦ MERRY CHRISTMAS 2026 ✦</h1>
-    <div class="sub">3D ASCII Character Christmas Tree · 可修改源码</div>
+    <div class="sub">3D ASCII Christmas Tree · 可修改</div>
   </header>
 
   <div id="canvas-wrap">
@@ -103,44 +106,41 @@
   </div>
 
   <div class="controls">
-    <label>转速 <input type="range" id="speed" min="0.2" max="3" step="0.1" value="1"></label>
-    <label>密度 <input type="range" id="density" min="0.4" max="1.6" step="0.1" value="1"></label>
+    <label>转速 <input type="range" id="speed" min="0.2" max="2.5" step="0.1" value="1"></label>
+    <label>密度 <input type="range" id="density" min="0.5" max="1.8" step="0.1" value="1.2"></label>
     <label>雪量 <input type="range" id="snow" min="0" max="2" step="0.1" value="1"></label>
     <button id="toggle">暂停</button>
     <button id="reset">重置</button>
   </div>
 
-  <div class="info">
-    <p>树 · 星星 · 礼物 · 金色螺旋灯带 · 树干树根 · 飘雪 全部由 ASCII 字符与符号构成。</p>
-    <p>打开本 HTML 即可本地运行与修改。参数可在下方或源码顶部调整。</p>
-    <p>配套 20 秒竖屏 MP4 已生成，可直接下载使用。</p>
-  </div>
-
   <script>
-  // ================== 可修改参数 ==================
+  // ================== 可修改参数（新手可改这里） ==================
   const CFG = {
-    treeLayers: 18,
-    ptsPerLayer: 70,
-    lightTurns: 5.2,
-    lightPts: 220,
-    snowCount: 90,
-    rotationSpeed: 0.35,   // rad / sec base
+    treeLayers: 26,          // 树的层数（越多越密）
+    ptsPerLayer: 95,         // 每层点数
+    lightTurns: 6.0,         // 金色螺旋圈数
+    lightPts: 320,           // 灯带点数
+    snowCount: 110,
+    rotationSpeed: 0.32,     // 基础转速
+    // 投影放大系数 —— 这是控制树大小的关键！
+    scaleFactor: 1.85,
+    camZ: 2.55,
     colors: {
-      bg: [5, 8, 20],
+      bg: [5, 8, 18],
       greens: [
-        [25, 95, 45], [35, 125, 60], [50, 155, 80],
-        [65, 185, 100], [90, 210, 120], [130, 230, 150]
+        [18, 80, 38], [28, 110, 52], [42, 145, 72],
+        [58, 175, 92], [78, 200, 110], [110, 225, 140], [150, 240, 165]
       ],
-      gold: [255, 215, 70],
-      goldBright: [255, 245, 170],
-      trunk: [95, 60, 28],
-      snow: [230, 240, 255]
+      gold: [255, 210, 60],
+      goldBright: [255, 245, 160],
+      trunk: [100, 62, 28],
+      snow: [235, 245, 255]
     }
   };
 
-  // ================== Canvas setup ==================
+  // ================== Canvas ==================
   const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { alpha: false });
   const wrap = document.getElementById('canvas-wrap');
   let W, H, dpr;
 
@@ -148,50 +148,55 @@
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = wrap.clientWidth;
     H = wrap.clientHeight;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   resize();
   window.addEventListener('resize', resize);
 
-  // ================== Geometry ==================
+  // ================== 几何生成 ==================
   function makeTree() {
     const pts = [], cols = [];
     for (let i = 0; i < CFG.treeLayers; i++) {
       const t = i / (CFG.treeLayers - 1);
-      const r = 0.36 * (1 - Math.pow(t, 1.12));
-      const y = (1 - t) * 0.68 - 0.04;
-      const n = Math.floor(CFG.ptsPerLayer * (0.5 + 0.5 * (1 - t)));
+      // 更自然的树形
+      const r = 0.42 * (1 - Math.pow(t, 1.08)) * (0.95 + 0.05 * Math.sin(t * 14));
+      const y = (1 - t) * 0.78 - 0.02;
+      const n = Math.floor(CFG.ptsPerLayer * (0.55 + 0.45 * (1 - t)));
       for (let j = 0; j < n; j++) {
-        const theta = 2 * Math.PI * j / n + t * 1.6;
-        const rr = r * (0.8 + 0.2 * Math.random());
-        pts.push([rr * Math.cos(theta), y + (Math.random()-0.5)*0.015, rr * Math.sin(theta)]);
-        const gi = Math.min(Math.floor(t * CFG.colors.greens.length + Math.random()), CFG.colors.greens.length - 1);
+        const theta = 2 * Math.PI * j / n + t * 1.8;
+        const rr = r * (0.72 + 0.28 * Math.random());
+        const x = rr * Math.cos(theta);
+        const z = rr * Math.sin(theta);
+        const yy = y + (Math.random() - 0.5) * 0.018;
+        pts.push([x, yy, z]);
+        const gi = Math.min((t * CFG.colors.greens.length + Math.random() * 1.2) | 0, CFG.colors.greens.length - 1);
         cols.push(CFG.colors.greens[gi]);
       }
     }
     return { pts, cols };
   }
 
-  function makeTrunk() {
+  function makeTrunkAndRoots() {
     const pts = [], cols = [];
-    for (let i = 0; i < 140; i++) {
+    // 树干
+    for (let i = 0; i < 220; i++) {
       const t = Math.random();
-      const y = -0.01 - t * 0.11;
-      const r = 0.05 * (0.9 + 0.25 * t);
+      const y = -0.01 - t * 0.13;
+      const r = 0.058 * (0.88 + 0.28 * t);
       const th = Math.random() * Math.PI * 2;
       pts.push([r * Math.cos(th), y, r * Math.sin(th)]);
       cols.push(CFG.colors.trunk);
     }
-    // simple roots
-    for (let k = 0; k < 6; k++) {
-      const base = 2 * Math.PI * k / 6;
-      for (let i = 0; i < 18; i++) {
-        const t = i / 17;
-        const r = 0.05 + t * 0.09;
-        const th = base + 0.3 * Math.sin(t * 3);
-        const y = -0.11 - t * 0.05 - 0.015 * t * t;
+    // 树根
+    for (let k = 0; k < 8; k++) {
+      const base = 2 * Math.PI * k / 8 + 0.2;
+      for (let i = 0; i < 28; i++) {
+        const t = i / 27;
+        const r = 0.055 + t * 0.11 * (1.1 + 0.3 * Math.sin(k * 1.7));
+        const th = base + 0.45 * Math.sin(t * 3.2) * t;
+        const y = -0.13 - t * 0.07 - 0.025 * t * t;
         pts.push([r * Math.cos(th), y, r * Math.sin(th)]);
         cols.push(CFG.colors.trunk);
       }
@@ -204,32 +209,42 @@
     const total = CFG.lightPts;
     for (let i = 0; i < total; i++) {
       const t = i / total;
-      const y = 0.64 * (1 - t) - 0.02;
-      const r = 0.36 * (0.55 + 0.45 * (1 - Math.pow(t, 1.1))) * 0.9;
+      const y = 0.76 * (1 - t) - 0.01;
+      const r = 0.42 * (0.58 + 0.42 * (1 - Math.pow(t, 1.05))) * 0.93;
       const th = t * CFG.lightTurns * Math.PI * 2;
       pts.push([r * Math.cos(th), y, r * Math.sin(th)]);
-      cols.push(i % 6 < 2 ? CFG.colors.goldBright : CFG.colors.gold);
+      // 每隔几个更亮，形成灯珠
+      cols.push(i % 5 < 2 ? CFG.colors.goldBright : CFG.colors.gold);
     }
     return { pts, cols };
   }
 
   function makeStar() {
     const pts = [], cols = [];
-    const size = 0.085;
+    const size = 0.11;
     for (let i = 0; i < 5; i++) {
       const a1 = 2 * Math.PI * i / 5 - Math.PI / 2;
-      for (let s = 0; s < 10; s++) {
-        const f = s / 9;
-        const r = size * (1 - 0.55 * f);
-        pts.push([r * Math.cos(a1), size * 1.12 + r * Math.sin(a1) * 0.65, (Math.random()-0.5)*0.025]);
-        cols.push(f < 0.3 ? CFG.colors.goldBright : CFG.colors.gold);
+      for (let s = 0; s < 14; s++) {
+        const f = s / 13;
+        const r = size * (1 - 0.58 * f);
+        pts.push([
+          r * Math.cos(a1),
+          size * 1.18 + r * Math.sin(a1) * 0.68,
+          (Math.random() - 0.5) * 0.03
+        ]);
+        cols.push(f < 0.25 ? CFG.colors.goldBright : CFG.colors.gold);
       }
     }
-    for (let i = 0; i < 40; i++) {
-      const rr = size * 0.6 * Math.random()**0.6;
+    // 额外光晕点
+    for (let i = 0; i < 55; i++) {
+      const rr = size * 0.75 * Math.pow(Math.random(), 0.55);
       const th = Math.random() * Math.PI * 2;
-      const ph = (Math.random()-0.5) * 1.2;
-      pts.push([rr*Math.cos(th)*Math.cos(ph), size*1.12 + rr*Math.sin(ph), rr*Math.sin(th)*Math.cos(ph)]);
+      const ph = (Math.random() - 0.5) * 1.4;
+      pts.push([
+        rr * Math.cos(th) * Math.cos(ph),
+        size * 1.18 + rr * Math.sin(ph),
+        rr * Math.sin(th) * Math.cos(ph)
+      ]);
       cols.push(CFG.colors.goldBright);
     }
     return { pts, cols };
@@ -237,26 +252,34 @@
 
   function makeGifts() {
     const gifts = [];
-    const pos = [[0.2,0,0.16],[-0.18,0,0.13],[0.04,0,-0.2],[-0.16,0,-0.1],[0.22,0,-0.06]];
-    const sizes = [0.065,0.05,0.06,0.045,0.055];
-    const gcols = [[180,40,50],[40,80,180],[200,160,40],[140,50,150],[30,140,90]];
+    const pos = [
+      [0.24, 0, 0.18], [-0.22, 0, 0.15], [0.06, 0, -0.23],
+      [-0.19, 0, -0.13], [0.26, 0, -0.07], [-0.08, 0, 0.22]
+    ];
+    const sizes = [0.075, 0.058, 0.068, 0.052, 0.062, 0.048];
+    const gcols = [
+      [190, 45, 55], [45, 90, 190], [210, 165, 40],
+      [155, 55, 160], [35, 150, 95], [200, 80, 40]
+    ];
     pos.forEach((p, idx) => {
       const pts = [], cols = [];
       const sz = sizes[idx], col = gcols[idx];
-      for (let i = 0; i < 90; i++) {
-        const face = Math.floor(Math.random()*6);
-        const u = (Math.random()-0.5)*2, v = (Math.random()-0.5)*2;
-        let x,y,z;
-        if (face===0) { x=sz; y=u*sz*0.7; z=v*sz; }
-        else if (face===1) { x=-sz; y=u*sz*0.7; z=v*sz; }
-        else if (face===2) { x=u*sz; y=sz*0.65; z=v*sz; }
-        else if (face===3) { x=u*sz; y=-sz*0.65; z=v*sz; }
-        else if (face===4) { x=u*sz; y=v*sz*0.65; z=sz; }
-        else { x=u*sz; y=v*sz*0.65; z=-sz; }
-        pts.push([p[0]+x, p[1]+y-0.02, p[2]+z]);
-        cols.push(Math.abs(u)<0.2||Math.abs(v)<0.2 ? col.map(c=>Math.min(255,c+50)) : col);
+      for (let i = 0; i < 130; i++) {
+        const face = (Math.random() * 6) | 0;
+        const u = (Math.random() - 0.5) * 2;
+        const v = (Math.random() - 0.5) * 2;
+        let x, y, z;
+        if (face === 0)      { x =  sz; y = u * sz * 0.72; z = v * sz; }
+        else if (face === 1) { x = -sz; y = u * sz * 0.72; z = v * sz; }
+        else if (face === 2) { x = u * sz; y =  sz * 0.68; z = v * sz; }
+        else if (face === 3) { x = u * sz; y = -sz * 0.68; z = v * sz; }
+        else if (face === 4) { x = u * sz; y = v * sz * 0.68; z =  sz; }
+        else                 { x = u * sz; y = v * sz * 0.68; z = -sz; }
+        pts.push([p[0] + x, p[1] + y - 0.025, p[2] + z]);
+        const bright = (Math.abs(u) < 0.18 || Math.abs(v) < 0.18);
+        cols.push(bright ? col.map(c => Math.min(255, c + 55)) : col);
       }
-      gifts.push({pts, cols});
+      gifts.push({ pts, cols });
     });
     return gifts;
   }
@@ -264,178 +287,223 @@
   function makeSnow(n) {
     const pts = [], vel = [];
     for (let i = 0; i < n; i++) {
-      pts.push([(Math.random()-0.5)*1.5, Math.random()*1.3-0.1, (Math.random()-0.5)*1.3]);
-      vel.push([(Math.random()-0.5)*0.004, -0.006 - Math.random()*0.01, (Math.random()-0.5)*0.003]);
+      pts.push([
+        (Math.random() - 0.5) * 1.7,
+        Math.random() * 1.4 - 0.15,
+        (Math.random() - 0.5) * 1.5
+      ]);
+      vel.push([
+        (Math.random() - 0.5) * 0.005,
+        -0.007 - Math.random() * 0.012,
+        (Math.random() - 0.5) * 0.004
+      ]);
     }
     return { pts, vel };
   }
 
   let tree = makeTree();
-  let trunk = makeTrunk();
+  let trunk = makeTrunkAndRoots();
   let lights = makeLights();
   let star = makeStar();
   let gifts = makeGifts();
   let snow = makeSnow(CFG.snowCount);
 
-  // ================== Projection & Draw ==================
-  const CHARS = " .·:;+*=%#@";
-  function project(pts, angle, scale) {
+  // ================== 投影（关键放大） ==================
+  const CHARS = " .·:;+=*#%@";
+  function project(pts, angle) {
     const c = Math.cos(angle), s = Math.sin(angle);
     const out = [];
+    const sf = CFG.scaleFactor;
     for (let i = 0; i < pts.length; i++) {
       let x = pts[i][0], y = pts[i][1], z = pts[i][2];
-      // rotate Y
+      // 绕 Y 轴旋转
       const xr = x * c + z * s;
       const zr = -x * s + z * c;
-      const zz = zr + 3.6;
-      const sc = 1.05 / Math.max(0.2, zz);
-      const sx = (xr * sc * 0.5 + 0.5) * W;
-      const sy = (0.52 - y * sc * 0.42) * H;
+      const zz = zr + CFG.camZ;
+      const sc = sf / Math.max(0.35, zz);
+      const sx = (xr * sc * 0.48 + 0.5) * W;
+      // 垂直方向也放大，树占更多高度
+      const sy = (0.58 - y * sc * 0.52) * H;
       out.push([sx, sy, zz, i]);
     }
     return out;
   }
 
   function drawPoints(proj, cols, baseSize, glow) {
-    // sort far to near
-    proj.sort((a,b) => b[2] - a[2]);
+    proj.sort((a, b) => b[2] - a[2]);
     for (const p of proj) {
       const [x, y, z, idx] = p;
-      if (x < -10 || x > W+10 || y < -10 || y > H+10) continue;
-      const df = Math.max(0.45, Math.min(1.3, 2.0 / z));
+      if (x < -15 || x > W + 15 || y < -15 || y > H + 15) continue;
+      const df = Math.max(0.5, Math.min(1.35, 2.1 / z));
       const col = cols[idx];
-      const r = Math.min(255, col[0] * (0.75 + 0.25*df))|0;
-      const g = Math.min(255, col[1] * (0.75 + 0.25*df))|0;
-      const b = Math.min(255, col[2] * (0.75 + 0.25*df))|0;
-      const ci = Math.min(CHARS.length-1, Math.max(0, (1.3 - z*0.12)*3.5 | 0));
+      const r = Math.min(255, (col[0] * (0.72 + 0.28 * df)) | 0);
+      const g = Math.min(255, (col[1] * (0.72 + 0.28 * df)) | 0);
+      const b = Math.min(255, (col[2] * (0.72 + 0.28 * df)) | 0);
+      const ci = Math.min(CHARS.length - 1, Math.max(0, ((1.25 - z * 0.14) * 4) | 0));
       const ch = CHARS[ci];
-      const fs = Math.max(7, (baseSize * df * (0.9 + 0.2*Math.random())) | 0);
-      ctx.font = `${fs}px monospace`;
+      const fs = Math.max(8, (baseSize * df * (0.92 + 0.16 * Math.random())) | 0);
+      ctx.font = `bold ${fs}px monospace`;
       ctx.fillStyle = `rgb(${r},${g},${b})`;
-      if (glow && Math.random() > 0.55) {
-        ctx.globalAlpha = 0.35;
-        ctx.fillText(ch, x-1, y);
-        ctx.fillText(ch, x+1, y);
+      if (glow && Math.random() > 0.5) {
+        ctx.globalAlpha = 0.32;
+        ctx.fillText(ch, x - 1.2, y);
+        ctx.fillText(ch, x + 1.2, y);
         ctx.globalAlpha = 1;
       }
       ctx.fillText(ch, x, y);
     }
   }
 
-  // ================== Animation ==================
+  // ================== 动画主循环 ==================
   let angle = 0;
   let last = performance.now();
   let running = true;
   let speedMul = 1;
-  let densMul = 1;
+  let densMul = 1.2;
   let snowMul = 1;
-  let frameCount = 0, fpsTime = 0, fps = 0;
+  let frameCount = 0, fpsTime = 0;
 
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     if (running) angle += CFG.rotationSpeed * speedMul * dt;
 
-    // clear
+    // 清屏
     ctx.fillStyle = `rgb(${CFG.colors.bg.join(',')})`;
     ctx.fillRect(0, 0, W, H);
 
-    // stars bg
-    ctx.fillStyle = '#c8d0e8';
-    for (let i = 0; i < 90; i++) {
-      const sx = (Math.sin(i*12.3 + 1)*0.5+0.5) * W;
-      const sy = (Math.cos(i*7.7 + 2)*0.5+0.5) * H * 0.5;
-      const tw = 0.5 + 0.5 * Math.sin(now*0.002 + i);
-      ctx.globalAlpha = tw * 0.7;
-      ctx.fillRect(sx, sy, 1.5, 1.5);
+    // 星空
+    ctx.fillStyle = '#c0c8e0';
+    for (let i = 0; i < 110; i++) {
+      const sx = ((Math.sin(i * 13.7 + 2.1) * 0.5 + 0.5) * W) | 0;
+      const sy = ((Math.cos(i * 8.3 + 1.4) * 0.5 + 0.5) * H * 0.52) | 0;
+      const tw = 0.45 + 0.55 * Math.sin(now * 0.0018 + i * 0.7);
+      ctx.globalAlpha = tw * 0.75;
+      const sz = (i % 7 === 0) ? 2.2 : 1.3;
+      ctx.fillRect(sx, sy, sz, sz);
     }
     ctx.globalAlpha = 1;
 
-    // snow
-    const sn = Math.floor(CFG.snowCount * snowMul);
+    // 雪
+    const sn = Math.min(snow.pts.length, (CFG.snowCount * snowMul) | 0);
     for (let i = 0; i < sn; i++) {
       snow.pts[i][0] += snow.vel[i][0];
       snow.pts[i][1] += snow.vel[i][1];
       snow.pts[i][2] += snow.vel[i][2];
-      if (snow.pts[i][1] < -0.4) {
-        snow.pts[i][1] = 1.1;
-        snow.pts[i][0] = (Math.random()-0.5)*1.5;
+      if (snow.pts[i][1] < -0.45) {
+        snow.pts[i][1] = 1.15;
+        snow.pts[i][0] = (Math.random() - 0.5) * 1.7;
       }
     }
-    const snowP = project(snow.pts.slice(0, sn), angle, 1);
-    ctx.fillStyle = `rgb(${CFG.colors.snow.join(',')})`;
-    ctx.font = '10px monospace';
+    const snowP = project(snow.pts.slice(0, sn), angle);
+    ctx.font = '11px monospace';
     for (const p of snowP) {
-      if (p[0]>0 && p[0]<W && p[1]>0 && p[1]<H) {
-        ctx.globalAlpha = 0.5 + 0.4*Math.sin(now*0.003 + p[3]);
-        ctx.fillText(Math.random()>0.5 ? '*' : '·', p[0], p[1]);
+      if (p[0] > 0 && p[0] < W && p[1] > 0 && p[1] < H) {
+        ctx.globalAlpha = 0.45 + 0.45 * Math.sin(now * 0.0025 + p[3]);
+        ctx.fillStyle = `rgb(${CFG.colors.snow.join(',')})`;
+        ctx.fillText(Math.random() > 0.55 ? '*' : '·', p[0], p[1]);
       }
     }
     ctx.globalAlpha = 1;
 
-    // geometry (density scale by skipping)
-    const step = densMul > 1 ? 1 : Math.max(1, Math.floor(1/densMul));
+    // 密度控制（通过跳点）
+    const step = densMul >= 1.3 ? 1 : Math.max(1, Math.floor(1.4 / densMul));
     function sub(pts, cols) {
-      if (step === 1) return {pts, cols};
-      const np=[], nc=[];
-      for (let i=0; i<pts.length; i+=step) { np.push(pts[i]); nc.push(cols[i]); }
-      return {pts:np, cols:nc};
+      if (step <= 1) return { pts, cols };
+      const np = [], nc = [];
+      for (let i = 0; i < pts.length; i += step) {
+        np.push(pts[i]);
+        nc.push(cols[i]);
+      }
+      return { pts: np, cols: nc };
     }
+
+    // 绘制顺序：树干 → 树 → 灯带 → 礼物 → 星星
+    const tr = sub(trunk.pts, trunk.cols);
+    drawPoints(project(tr.pts, angle), tr.cols, 11, false);
 
     const tsub = sub(tree.pts, tree.cols);
-    drawPoints(project(tsub.pts, angle, 1), tsub.cols, 11, false);
+    drawPoints(project(tsub.pts, angle), tsub.cols, 12, false);
 
-    const tr = sub(trunk.pts, trunk.cols);
-    drawPoints(project(tr.pts, angle, 1), tr.cols, 10, false);
-
+    // 金色螺旋灯带（带光晕）
     const li = sub(lights.pts, lights.cols);
-    drawPoints(project(li.pts, angle, 1), li.cols, 13, true);
+    drawPoints(project(li.pts, angle), li.cols, 14, true);
 
-    // bright bulbs
-    const lp = project(lights.pts, angle, 1);
-    for (let i = 0; i < lp.length; i += 5) {
+    // 额外灯珠光晕
+    const lp = project(lights.pts, angle);
+    for (let i = 0; i < lp.length; i += 4) {
       const p = lp[i];
-      if (p[0]<0||p[0]>W||p[1]<0||p[1]>H) continue;
-      const grd = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], 10);
-      grd.addColorStop(0, 'rgba(255,230,120,0.55)');
-      grd.addColorStop(1, 'rgba(255,180,40,0)');
+      if (p[0] < 0 || p[0] > W || p[1] < 0 || p[1] > H) continue;
+      const grd = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], 12);
+      grd.addColorStop(0, 'rgba(255,235,130,0.6)');
+      grd.addColorStop(0.5, 'rgba(255,190,50,0.22)');
+      grd.addColorStop(1, 'rgba(255,160,30,0)');
       ctx.fillStyle = grd;
-      ctx.beginPath(); ctx.arc(p[0], p[1], 10, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#fff8c0';
-      ctx.font = '12px monospace';
-      ctx.fillText('●', p[0]-4, p[1]+4);
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff6c0';
+      ctx.font = '13px monospace';
+      ctx.fillText('●', p[0] - 5, p[1] + 4);
     }
 
+    // 礼物
     gifts.forEach(g => {
       const gs = sub(g.pts, g.cols);
-      drawPoints(project(gs.pts, angle, 1), gs.cols, 9, false);
+      drawPoints(project(gs.pts, angle), gs.cols, 10, false);
     });
 
+    // 星星（脉动）
     const st = sub(star.pts, star.cols);
-    const pulse = 0.8 + 0.2 * Math.sin(now * 0.004);
-    const scols = st.cols.map(c => c.map(v => Math.min(255, v * pulse)));
-    drawPoints(project(st.pts, angle, 1), scols, 12, true);
+    const pulse = 0.78 + 0.22 * Math.sin(now * 0.0038);
+    const scols = st.cols.map(c => [
+      Math.min(255, (c[0] * pulse) | 0),
+      Math.min(255, (c[1] * pulse) | 0),
+      Math.min(255, (c[2] * pulse) | 0)
+    ]);
+    drawPoints(project(st.pts, angle), scols, 13, true);
 
-    // title
-    ctx.font = 'bold 22px monospace';
+    // 中心大星
+    const starP = project(star.pts, angle);
+    if (starP.length) {
+      let cx = 0, cy = 0;
+      for (const p of starP) { cx += p[0]; cy += p[1]; }
+      cx /= starP.length;
+      cy /= starP.length;
+      const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 22);
+      grd.addColorStop(0, `rgba(255,245,180,${0.55 * pulse})`);
+      grd.addColorStop(0.4, `rgba(255,200,60,${0.25 * pulse})`);
+      grd.addColorStop(1, 'rgba(255,160,20,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff8d0';
+      ctx.font = '22px monospace';
+      ctx.fillText('★', cx - 11, cy + 8);
+    }
+
+    // 底部祝福文字
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(40,30,10,0.7)';
-    ctx.fillText('MERRY CHRISTMAS 2026', W/2+1, H*0.90+1);
-    ctx.fillStyle = '#ffe080';
-    ctx.shadowColor = '#ffaa00';
-    ctx.shadowBlur = 12;
-    ctx.fillText('MERRY CHRISTMAS 2026', W/2, H*0.90);
+    ctx.font = 'bold 20px monospace';
+    ctx.fillStyle = 'rgba(30, 22, 8, 0.75)';
+    ctx.fillText('MERRY CHRISTMAS 2026', W / 2 + 1.5, H * 0.915 + 1.5);
+    ctx.fillStyle = '#ffe070';
+    ctx.shadowColor = '#ff9900';
+    ctx.shadowBlur = 14;
+    ctx.fillText('MERRY CHRISTMAS 2026', W / 2, H * 0.915);
     ctx.shadowBlur = 0;
-    ctx.font = '13px monospace';
-    ctx.fillStyle = '#a08050';
-    ctx.fillText('✦ ASCII 3D Tree ✦', W/2, H*0.90 + 22);
+    ctx.font = '12px monospace';
+    ctx.fillStyle = '#b09050';
+    ctx.fillText('✦ ASCII 3D Tree ✦', W / 2, H * 0.915 + 20);
     ctx.textAlign = 'left';
 
-    // fps
+    // FPS
     frameCount++;
-    if (now - fpsTime > 500) {
-      fps = Math.round(frameCount * 1000 / (now - fpsTime));
-      frameCount = 0; fpsTime = now;
+    if (now - fpsTime > 600) {
+      const fps = Math.round(frameCount * 1000 / (now - fpsTime));
+      frameCount = 0;
+      fpsTime = now;
       document.getElementById('fps').textContent = fps + ' fps';
     }
 
@@ -444,18 +512,21 @@
 
   requestAnimationFrame(frame);
 
-  // controls
-  document.getElementById('speed').oninput = e => speedMul = parseFloat(e.target.value);
-  document.getElementById('density').oninput = e => densMul = parseFloat(e.target.value);
-  document.getElementById('snow').oninput = e => snowMul = parseFloat(e.target.value);
+  // 控件
+  document.getElementById('speed').oninput = e => speedMul = +e.target.value;
+  document.getElementById('density').oninput = e => densMul = +e.target.value;
+  document.getElementById('snow').oninput = e => snowMul = +e.target.value;
   document.getElementById('toggle').onclick = () => {
     running = !running;
     document.getElementById('toggle').textContent = running ? '暂停' : '继续';
   };
   document.getElementById('reset').onclick = () => {
-    angle = 0; speedMul = 1; densMul = 1; snowMul = 1;
+    angle = 0;
+    speedMul = 1;
+    densMul = 1.2;
+    snowMul = 1;
     document.getElementById('speed').value = 1;
-    document.getElementById('density').value = 1;
+    document.getElementById('density').value = 1.2;
     document.getElementById('snow').value = 1;
   };
   </script>
